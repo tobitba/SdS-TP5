@@ -50,6 +50,7 @@ public class Beeman {
 
         @Override
         public Time next() {
+            silo.updateBase();
             double[][] forceMatrix = silo.getForceMatrix();
             for (Particle p : silo.grains()) {
                 double[] forceArray = forceMatrix[p.getId()];
