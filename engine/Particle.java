@@ -1,6 +1,7 @@
 package engine;
 
 public class Particle {
+    public static final int DIMENSION = 2;
     private static int globalId = 1;
     private final int id;
     private double x, y;
@@ -14,37 +15,22 @@ public class Particle {
         this.radius = radius;
     }
 
-    public void move(double deltaT) {
-        x = x + speedx * deltaT;
-        y = y + speedy * deltaT;
+    public void updatePos(double[] newPos) {
+        x = newPos[0];
+        y = newPos[1];
     }
 
-    public void updateSpeedX(double speedX) {
-        this.speedx = speedX;
+    public void updateSpeed(double[] newSpeed) {
+        speedx = newSpeed[0];
+        speedy = newSpeed[1];
     }
 
-    public void updateSpeedY(double speedY) {
-        this.speedy = speedY;
+    public double[] getPos(){
+        return new double[]{x, y};
     }
 
-    private double dotProd(double[] v1, double[] v2){
-        return v1[0] * v2[0] + v1[1] * v2[1];
-    }
-
-    public double getSpeedX() {
-        return speedx;
-    }
-
-    public double getSpeedY() {
-        return speedy;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public double getY() {
-        return y;
+    public double[] getSpeed(){
+        return new double[]{speedx, speedy};
     }
 
     public double getRadius() {
