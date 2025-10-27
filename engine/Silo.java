@@ -7,6 +7,7 @@ public class Silo {
     private final double height;
     private final double opening;
     private double ys;
+    private long totalFlow;
 
     private final List<Particle> grains;
     private final int grainCount;
@@ -41,6 +42,10 @@ public class Silo {
 
     public int grainCount() {
         return grainCount;
+    }
+
+    public long totalFlow() {
+        return totalFlow;
     }
 
     public List<Particle> grains() {

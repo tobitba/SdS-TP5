@@ -84,7 +84,7 @@ public class Beeman {
             }
             time += dt;
             prevForceMatrix = forceMatrix;
-            return new Time(time, silo.grains());
+            return new Time(time, silo.grains(), silo.totalFlow());
         }
     }
 }

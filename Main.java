@@ -1,5 +1,6 @@
 import engine.*;
 import tools.ParticleGenerator;
+import tools.PostProcessor;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,8 +27,7 @@ public class Main {
         Iterator<Time> timeIt = integrator.beemanEstimation();
         timeIt.forEachRemaining(time -> {
             if(i.getAndIncrement() % (1/(SMOOTHING_FACTOR*dt)) == 0)
-                //PostPocessor.processSystem(time);
-                System.out.println(time);
+                PostProcessor.processSystem(time);
         });
     }
 }
