@@ -19,7 +19,6 @@ public class Main {
         double mass = 1;
         AtomicInteger i = new AtomicInteger(0);
         ArrayList<Particle> grains = new ArrayList<>();
-        //TODO: Check particles for overlap with other particles and the edges of the map
         ParticleGenerator.generate(200,grains::add,height,width);
         //250N/m = 2,5N/cm
         Silo silo = new Silo(width,height,d,grains,w,0.15,dt, mass, 2.5);
