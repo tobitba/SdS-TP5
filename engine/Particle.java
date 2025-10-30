@@ -4,9 +4,10 @@ public class Particle {
     public static final int DIMENSION = 2;
     private static int globalId = 1;
     private final int id;
-    private double x, y;
-    private double speedx = 0, speedy = 0;
-    private final double radius;
+    double x;
+    double y;
+    double speedx = 0, speedy = 0;
+    final double radius;
 
     public Particle(double x, double y, double radius) {
         this.id = globalId++;
@@ -31,10 +32,6 @@ public class Particle {
 
     public double[] getSpeed(){
         return new double[]{speedx, speedy};
-    }
-
-    public double getRadius() {
-        return radius;
     }
 
     @Override

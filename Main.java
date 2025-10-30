@@ -12,17 +12,16 @@ public class Main {
     private static final double SMOOTHING_FACTOR = 10;
 
     public static void main(String[] args) {
-        double w = Double.parseDouble(W);
-        double d = Double.parseDouble(D);
+        double w = Double.parseDouble(System.getProperty(W));
+        double d = Double.parseDouble(System.getProperty(D));
         double dt = 0.0001;
-        double height = 70;
-        double width = 20;
-        double mass = 1;
+        double height = 0.7;
+        double width = 0.2;
+        double mass = 0.001;
         AtomicInteger i = new AtomicInteger(0);
         ArrayList<Particle> grains = new ArrayList<>();
         ParticleGenerator.generate(200,grains::add,height,width);
-        //250N/m = 2,5N/cm
-        Silo silo = new Silo(width,height,d,grains,w,0.15,dt, mass, 2.5);
+        Silo silo = new Silo(width,height,d,grains,w,0.0015,dt, 250);
         Beeman integrator = new Beeman(dt,1000,silo,mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
         timeIt.forEachRemaining(time -> {

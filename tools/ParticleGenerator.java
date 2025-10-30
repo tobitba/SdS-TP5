@@ -10,11 +10,11 @@ public class ParticleGenerator {
         Random random = new Random();
         random.setSeed(System.currentTimeMillis());
         double x,y;
-        double radius = 1.1;
+        double radius = 0.011;
         double cellSize = 2 * radius;
         GeneratedGrid grid = new GeneratedGrid(radius);
         for (int i = 0; i < particleNumber; i++) {
-            radius = random.nextDouble() * 0.2 + 0.9;
+            radius = random.nextDouble() * 0.002 + 0.009;
             x = random.nextDouble() * (width - 2 * radius) + radius;
             y = random.nextDouble() * (height - 2 * radius) + radius;
             int ci = (int) Math.floor(x / cellSize);
