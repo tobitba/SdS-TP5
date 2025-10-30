@@ -22,6 +22,9 @@ public class Silo {
     private final double dt;
     private final double kn;
     private final double ky;
+    private final static int X = 0;
+    private final static int Y = 1;
+
 
     public Silo(double width, double height, double opening, List<Particle> grains, double frequency, double amplitude, double dt, double kn) {
         this.width = width;
@@ -102,8 +105,41 @@ public class Silo {
             }
             if(p.x - p.radius < 0) {
                 //LEFT WALL
+                double[] en = WallVersor.LEFT.getEn();
+                double[] et = WallVersor.LEFT.getEt();
+                double vn = p.speedx * en[X] + p.speedy * en[Y];
+                double vt = p.speedx * et[X] + p.speedy * et[Y];
+                double xi =  p.radius - p.x;  // xi = R - |distancia pared|
+                double dxi = - vn; //TODO: preguntar si esta bien!!!!!!!!
+
+                double fnCoeff = -kn * xi - dxi * gamma;
+                double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
+                double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
+                double ftCoeff = -mu * fnAbs * Math.signum( vt); //TODO: preguntar
+                double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
+                double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
+                for (int i = 0; i < 2; i++) {
+                    forceArray[i] += fnet[i];
+                }
+
             } else if(p.x + p.radius > width) {
                 //RIGHT WALL
+                double[] en = WallVersor.RIGHT.getEn();
+                double[] et = WallVersor.RIGHT.getEt();
+                double vn = p.speedx * en[X] + p.speedy * en[Y];
+                double vt = p.speedx * et[X] + p.speedy * et[Y];
+                double xi =  p.radius - (p.x - width);  // xi = R - |distancia pared|
+                double dxi = - vn; //TODO: preguntar si esta bien!!!!!!!!
+
+                double fnCoeff = -kn * xi - dxi * gamma;
+                double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
+                double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
+                double ftCoeff = -mu * fnAbs * Math.signum( vt); //TODO: preguntar
+                double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
+                double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
+                for (int i = 0; i < 2; i++) {
+                    forceArray[i] += fnet[i];
+                }
             }
             if(p.y - p.radius < ys && p.y + p.radius > ys && p.x - p.radius < leftFloor  && p.x + p.radius < rightFloor) {
                 //LE FLOOR
