@@ -27,3 +27,5 @@ node_modules
 pnpm-lock.yaml
 .idea
 SdS-TP5.iml
+out
+*.txt
