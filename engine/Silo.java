@@ -15,6 +15,8 @@ public class Silo {
     private final double mu = 0.5;
 
     private final List<Particle> grains;
+    private final FixedBaseParticle leftBoundaryParticle;
+    private final FixedBaseParticle rightBoundaryParticle;
     private final int grainCount;
     private final double amplitude;
     private final double frequency;
@@ -39,11 +41,15 @@ public class Silo {
         this.amplitude = amplitude;
         this.kn = kn;
         this.ky = 2*kn;
+        this.leftBoundaryParticle = new FixedBaseParticle((width - opening)/2, 0 );
+        this.rightBoundaryParticle = new FixedBaseParticle(width-(width-opening)/2, 0);
     }
 
     public void updateBase() {
         currentTime += dt;
         ys = amplitude * Math.sin(currentTime*frequency);
+        leftBoundaryParticle.updatePos(ys);
+        leftBoundaryParticle.updatePos(ys);
         for(Particle g : grains) {
             if(g.y - ys <= -height/10) {
                 g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
