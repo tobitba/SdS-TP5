@@ -45,7 +45,7 @@ public class Silo {
         currentTime += dt;
         ys = amplitude * Math.sin(currentTime*frequency);
         for(Particle g : grains) {
-            if(g.y - ys > height/10) {
+            if(g.y - ys <= -height/10) {
                 g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
             }
         }
