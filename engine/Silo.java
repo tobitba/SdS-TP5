@@ -72,7 +72,7 @@ public class Silo {
         double leftFloor = (width-opening)/2;
         double rightFloor = width-(width-opening)/2;
         for(Particle p : grains) {
-            double[] forceArray = {0,-9.8}; // multiplicar por masa
+            double[] forceArray = {0,-9.8/1000};
             //TODO: Hacer que esto use el cellIndexMethod
             //TODO: Paralelizar esto
             //TODO: Ver de optimizar esto con simetria
@@ -90,7 +90,6 @@ public class Silo {
                         double dvx = p2.speedx - p.speedx;
                         double dvy = p2.speedy - p.speedy;
                         double[] dv = {dvx, dvy};
-                        double dxi = dvx * dvx + dvy * dvy; //no va
                         double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
                         double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
                         double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
