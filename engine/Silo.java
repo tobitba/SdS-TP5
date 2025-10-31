@@ -10,9 +10,9 @@ public class Silo {
     private final double opening;
     private double ys;
     private long totalFlow;
-    //TODO: Que gamma y que mu usamos?
-    private final double gamma = 100;
-    private final double mu = 0.1;
+    //Gamma puede ser 1 o 0.1
+    private final double gamma = 0.1;
+    private final double mu = 0.5;
 
     private final List<Particle> grains;
     private final int grainCount;
