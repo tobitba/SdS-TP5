@@ -40,18 +40,18 @@ public class Silo {
         currentTime = 0;
         this.amplitude = amplitude;
         this.kn = kn;
-        this.ky = 2*kn;
-        this.leftBoundaryParticle = new FixedBaseParticle((width - opening)/2, 0 );
-        this.rightBoundaryParticle = new FixedBaseParticle(width-(width-opening)/2, 0);
+        this.ky = 2 * kn;
+        this.leftBoundaryParticle = new FixedBaseParticle((width - opening) / 2, 0);
+        this.rightBoundaryParticle = new FixedBaseParticle(width - (width - opening) / 2, 0);
     }
 
     public void updateBase() {
         currentTime += dt;
-        ys = amplitude * Math.sin(currentTime*frequency);
+        ys = amplitude * Math.sin(currentTime * frequency);
         leftBoundaryParticle.updatePos(ys);
         rightBoundaryParticle.updatePos(ys);
-        for(Particle g : grains) {
-            if(g.y - ys <= -height/10) {
+        for (Particle g : grains) {
+            if (g.y - ys <= -height / 10) {
                 g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
                 totalFlow++;
             }
@@ -71,85 +71,94 @@ public class Silo {
     }
 
     private double dotProduct(double[] a, double[] b) {
-        return a[0]*b[0] + a[1]*b[1];
+        return a[0] * b[0] + a[1] * b[1];
+    }
+
+    private double[] getFnet(double xi, double[] dv, double[] en, double[] et) {
+        double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
+        double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
+        double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
+        double ftCoeff = -mu * fnAbs * Math.signum(dotProduct(et, dv));
+        double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
+        return new double[]{fn[0] + ft[0], fn[1] + ft[1]};
+    }
+
+    private double[] getParticleInteractionForce(Particle p, Particle p2) {
+        double dx = p2.x - p.x;
+        double dy = p2.y - p.y;
+        double dr = Math.sqrt(dx * dx + dy * dy);
+        double xi = p.radius + p2.radius - dr;
+        double[] fnet = {0.0, 0.0};
+        if (xi > 0) {
+            double enx = dx / dr;
+            double eny = dy / dr;
+            double[] en = {enx, eny};
+            double[] et = {-eny, enx};
+            double dvx = p2.speedx - p.speedx;
+            double dvy = p2.speedy - p.speedy;
+            double[] dv = {dvx, dvy};
+            fnet = getFnet(xi, dv, en, et);
+        }
+        return fnet;
     }
 
     public double[][] getForceMatrix() {
         double[][] forceMatrix = new double[grainCount][Particle.DIMENSION];
-        double leftFloor = (width-opening)/2;
-        double rightFloor = width-(width-opening)/2;
-        for(Particle p : grains) {
-            double[] forceArray = {0,-9.8/1000};
+        double leftFloor = (width - opening) / 2;
+        double rightFloor = width - (width - opening) / 2;
+        for (Particle p : grains) {
+            double[] forceArray = {0, -9.8 / 1000};
             //TODO: Hacer que esto use el cellIndexMethod
             //TODO: Paralelizar esto
             //TODO: Ver de optimizar esto con simetria
-            for(Particle p2 : grains) {
-                if(p != p2){
-                    double dx = p2.x - p.x;
-                    double dy = p2.y - p.y;
-                    double dr = Math.sqrt(dx*dx + dy*dy);
-                    double xi = p.radius + p2.radius - dr;
-                    if(xi>0) {
-                        double enx = dx / dr;
-                        double eny = dy / dr;
-                        double[] en = {enx, eny};
-                        double[] et = {-eny, enx};
-                        double dvx = p2.speedx - p.speedx;
-                        double dvy = p2.speedy - p.speedy;
-                        double[] dv = {dvx, dvy};
-                        double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
-                        double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
-                        double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-                        double ftCoeff = -mu * fnAbs * Math.signum(dotProduct(et, dv));
-                        double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
-                        double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
-                        for (int i = 0; i < 2; i++) {
-                            forceArray[i] += fnet[i];
-                        }
+            for (Particle p2 : grains) {
+                if (p != p2) {
+                    double[] fnet = getParticleInteractionForce(p, p2);
+                    for (int i = 0; i < 2; i++) {
+                        forceArray[i] += fnet[i];
                     }
+
                 }
             }
-            if(p.x - p.radius < 0) {
+            if (p.x - p.radius < 0) {
                 //LEFT WALL
                 double[] en = WallVersor.LEFT.getEn();
                 double[] et = WallVersor.LEFT.getEt();
-                double vn = p.speedx * en[X] + p.speedy * en[Y];
-                double vt = p.speedx * et[X] + p.speedy * et[Y];
-                double xi =  p.radius - p.x;  // xi = R - |distancia pared|
-                double dxi = - vn;
-
-                double fnCoeff = -kn * xi - dxi * gamma;
-                double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
-                double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-                double ftCoeff = -mu * fnAbs * Math.signum( vt);
-                double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
-                double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
+                double xi = p.radius - p.x;  // xi = R - |distancia pared|
+                double[] fnet = getFnet(xi, p.getSpeed(), en, et);
                 for (int i = 0; i < 2; i++) {
                     forceArray[i] += fnet[i];
                 }
 
-            } else if(p.x + p.radius > width) {
+            } else if (p.x + p.radius > width) {
                 //RIGHT WALL
                 double[] en = WallVersor.RIGHT.getEn();
                 double[] et = WallVersor.RIGHT.getEt();
-                double vn = p.speedx * en[X] + p.speedy * en[Y];
-                double vt = p.speedx * et[X] + p.speedy * et[Y];
-                double xi =  p.radius - (p.x - width);  // xi = R - |distancia pared|
-                double dxi = - vn;
-
-                double fnCoeff = -kn * xi - dxi * gamma;
-                double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
-                double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-                double ftCoeff = -mu * fnAbs * Math.signum( vt);
-                double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
-                double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
+                double xi = p.radius - (p.x - width);  // xi = R - |distancia pared|
+                double[] fnet = getFnet(xi, p.getSpeed(), en, et);
                 for (int i = 0; i < 2; i++) {
                     forceArray[i] += fnet[i];
                 }
             }
-            if(p.y - p.radius < ys && p.y + p.radius > ys && p.x - p.radius < leftFloor  && p.x + p.radius < rightFloor) {
-                //LE FLOOR
-                //TODO: Como mierda hacemos los golpes de costado????
+            if (p.y - p.radius < ys && p.y + p.radius > ys) {
+                if (p.x < leftFloor || p.x > rightFloor) {
+                    //LE FLOOR
+                    double[] en = WallVersor.DOWN.getEn();
+                    double[] et = WallVersor.DOWN.getEt();
+                    double xi = p.radius - (p.y - ys);
+                    double[] fnet = getFnet(xi, p.getSpeed(), en, et);
+                    for (int i = 0; i < 2; i++) {
+                        forceArray[i] += fnet[i];
+                    }
+                } else {
+                    // O toco el borde o ya estoy en la apertura
+                    double[] fnetRight = getParticleInteractionForce(p, rightBoundaryParticle);
+                    double[] fnetLeft = getParticleInteractionForce(p, leftBoundaryParticle);
+                    for (int i = 0; i < 2; i++) {
+                        forceArray[i] += fnetRight[i] + fnetLeft[i];
+                    }
+                }
+
             }
             forceMatrix[p.getId()] = forceArray;
         }
