@@ -72,7 +72,7 @@ public class Silo {
         double leftFloor = (width-opening)/2;
         double rightFloor = width-(width-opening)/2;
         for(Particle p : grains) {
-            double[] forceArray = {0,-9.8};
+            double[] forceArray = {0,-9.8}; // multiplicar por masa
             //TODO: Hacer que esto use el cellIndexMethod
             //TODO: Paralelizar esto
             //TODO: Ver de optimizar esto con simetria
@@ -90,8 +90,8 @@ public class Silo {
                         double dvx = p2.speedx - p.speedx;
                         double dvy = p2.speedy - p.speedy;
                         double[] dv = {dvx, dvy};
-                        double dxi = dvx * dvx + dvy * dvy;
-                        double fnCoeff = -kn * xi - dxi * gamma;
+                        double dxi = dvx * dvx + dvy * dvy; //no va
+                        double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
                         double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
                         double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
                         double ftCoeff = -mu * fnAbs * Math.signum(dotProduct(et, dv));
@@ -110,12 +110,12 @@ public class Silo {
                 double vn = p.speedx * en[X] + p.speedy * en[Y];
                 double vt = p.speedx * et[X] + p.speedy * et[Y];
                 double xi =  p.radius - p.x;  // xi = R - |distancia pared|
-                double dxi = - vn; //TODO: preguntar si esta bien!!!!!!!!
+                double dxi = - vn;
 
                 double fnCoeff = -kn * xi - dxi * gamma;
                 double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
                 double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-                double ftCoeff = -mu * fnAbs * Math.signum( vt); //TODO: preguntar
+                double ftCoeff = -mu * fnAbs * Math.signum( vt);
                 double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
                 double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
                 for (int i = 0; i < 2; i++) {
@@ -129,12 +129,12 @@ public class Silo {
                 double vn = p.speedx * en[X] + p.speedy * en[Y];
                 double vt = p.speedx * et[X] + p.speedy * et[Y];
                 double xi =  p.radius - (p.x - width);  // xi = R - |distancia pared|
-                double dxi = - vn; //TODO: preguntar si esta bien!!!!!!!!
+                double dxi = - vn;
 
                 double fnCoeff = -kn * xi - dxi * gamma;
                 double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
                 double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-                double ftCoeff = -mu * fnAbs * Math.signum( vt); //TODO: preguntar
+                double ftCoeff = -mu * fnAbs * Math.signum( vt);
                 double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
                 double[] fnet = {fn[0] + ft[0], fn[1] + ft[1]};
                 for (int i = 0; i < 2; i++) {
