@@ -47,6 +47,7 @@ public class Silo {
         for(Particle g : grains) {
             if(g.y - ys <= -height/10) {
                 g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
+                totalFlow++;
             }
         }
     }
