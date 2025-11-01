@@ -56,4 +56,8 @@ public class Particle {
     public boolean equals(Object obj) {
         return obj instanceof Particle p && id == p.id;
     }
+
+    public double getRadius() {
+        return radius;
+    }
 }
