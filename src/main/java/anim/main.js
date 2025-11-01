@@ -41,7 +41,7 @@ program
     .option('--height <num>', 'Altura del silo L (unidades del archivo)', parseFloat, 2.0)
     .option('--opening <num>', 'Abertura del piso D (unidades del archivo)', parseFloat, 0.2)
     .option('--A <num>', 'Amplitud de vibración del piso (misma unidad que y)', parseFloat, 0.02)
-    .option('--w0 <num>', 'Frecuencia angular w0 (rad/s)', parseFloat, 30.0)
+    .option('--w0 <num>', 'Frecuencia angular w0 (rad/s)', parseFloat, 400)
     .option('--fps <num>', 'Frames por segundo para la salida', parseInt, 30)
     .option('--scale <num>', 'Píxeles por unidad (escala)', parseFloat, 400)
     .option('--apply-floor-to-particles', 'Aplicar desplazamiento del piso también a partículas', false)

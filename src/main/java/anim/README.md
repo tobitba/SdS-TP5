@@ -10,5 +10,5 @@ pnpm install
 
 Luego correr:
 ```bash
-pnpm exec node main.js ../<sim_file> -S <S> -L <L> --video-width 1200 --video-fps 20
+node main.js -i ../output.txt -o out --width 0.2 --height 0.7 --opening 0.03 --A 0.0015 --w0 400 --fps 30
 ```
