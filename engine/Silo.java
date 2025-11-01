@@ -74,10 +74,22 @@ public class Silo {
         double parX = particle.x;
         double parY = particle.y;
 
-        if (parX >= width || parX < 0 || parY >= height || parY < 0)
-            throw new IndexOutOfBoundsException("The particle doesn't fit on the grid");
+        if (parX >= width || parX < 0 || parY >= height || parY < 0) {
+            // throw new IndexOutOfBoundsException("The particle doesn't fit on the grid");
+            // System.out.printf("Particle %d left the grid\n", particle.getId());
+            return;
+        }
         int i = (int) (parX / hCellLength) + N * (int) (parY / vCellLength);
         grid.get(i).add(particle);
+    }
+
+    private void resetGrid() {
+        for (List<Particle> cell : grid) {
+            cell.clear();
+        }
+        for (Particle p : grains) {
+            addParticleToGrid(p);
+        }
     }
 
     public void updateBase() {
@@ -148,9 +160,9 @@ public class Silo {
                         particle.contactForce[X] += fnet[X];
                         particle.contactForce[Y] += fnet[Y];
 
-                        neighbor.contactForce[X] += fnet[X];
-                        neighbor.contactForce[Y] += fnet[Y];
-                        // Para debuggear lo de abajo
+                        neighbor.contactForce[X] -= fnet[X];
+                        neighbor.contactForce[Y] -= fnet[Y];
+                        // TODO Para debuggear lo de abajo, borrarlo luego
                         particle.addNeighbor(neighbor);
                         neighbor.addNeighbor(particle);
                     }
@@ -175,6 +187,7 @@ public class Silo {
         for (Particle p : grains) {
             p.resetContactForce();
         }
+        resetGrid();
         performCellIndexMethod();
         //TODO: Paralelizar esto
         for (Particle p : grains) {

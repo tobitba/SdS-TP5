@@ -15,7 +15,11 @@ public class Particle {
     final List<Particle> neighbors = new ArrayList<>();
 
     public Particle(double x, double y, double radius) {
-        this.id = globalId++;
+        this(x, y, radius, globalId++);
+    }
+
+    public Particle(double x, double y, double radius, int id) {
+        this.id = id;
         this.x = x;
         this.y = y;
         this.radius = radius;
