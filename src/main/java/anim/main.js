@@ -56,7 +56,7 @@ if (!fs.existsSync(opts.outdir)) fs.mkdirSync(opts.outdir, { recursive: true });
 
 /**
  * Parser del archivo de entrada.
- * Lee todo en memoria (si el archivo es enorme podrías adaptarlo a streaming),
+ * Lee all en memoria (si el archivo es enorme podrías adaptarlo a streaming),
  * y produce un array de frames:
  *   frames = [{ t: Number, flowtotal: Number, particles: [{x,y,vx,vy,r}, ...] }, ...]
  */

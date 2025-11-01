@@ -62,7 +62,7 @@ public class ParticleGenerator {
         }
 
         public void addParticle(Particle p, Cell cell) {
-            grid.computeIfAbsent(cell, _ -> new ArrayList<>()).add(p);
+            grid.computeIfAbsent(cell, a -> new ArrayList<>()).add(p);
         }
 
 

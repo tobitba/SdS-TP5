@@ -12,7 +12,6 @@ public class Particle {
     double speedx = 0, speedy = 0;
     final double radius;
     final double[] contactForce = {0.0, 0.0};
-    final List<Particle> neighbors = new ArrayList<>();
 
     public Particle(double x, double y, double radius) {
         this(x, y, radius, globalId++);
@@ -47,12 +46,7 @@ public class Particle {
         return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2)) - radius - p.radius;
     }
 
-    public void addNeighbor(Particle p) {
-        neighbors.add(p);
-    }
-
     public void resetContactForce() {
-        neighbors.clear();
         contactForce[0] = 0.0;
         contactForce[1] = 0.0;
     }

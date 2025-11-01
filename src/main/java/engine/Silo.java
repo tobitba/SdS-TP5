@@ -11,9 +11,6 @@ public class Silo {
     private final double opening;
     private double ys;
     private long totalFlow;
-    //Gamma puede ser 1 o 0.1
-    private final double gamma = 0.1;
-    private final double mu = 0.5;
 
     private final List<Particle> grains;
     private final FixedBaseParticle leftBoundaryParticle;
@@ -123,9 +120,12 @@ public class Silo {
     }
 
     private double[] getFnet(double xi, double[] dv, double[] en, double[] et) {
+        //Gamma puede ser 1 o 0.1
+        double gamma = 0.1;
         double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
         double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
         double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
+        double mu = 0.5;
         double ftCoeff = -mu * fnAbs * Math.signum(dotProduct(et, dv));
         double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
         return new double[]{fn[0] + ft[0], fn[1] + ft[1]};
@@ -163,9 +163,6 @@ public class Silo {
 
                         neighbor.contactForce[X] -= fnet[X];
                         neighbor.contactForce[Y] -= fnet[Y];
-                        // TODO Para debuggear lo de abajo, borrarlo luego
-                        particle.addNeighbor(neighbor);
-                        neighbor.addNeighbor(particle);
                     }
                 }
                 for (Particle neighbor : getCurrentCellParticles(i, particle)) {
@@ -173,8 +170,6 @@ public class Silo {
                         fnet = getParticleInteractionForce(particle, neighbor);
                         particle.contactForce[X] += fnet[X];
                         particle.contactForce[Y] += fnet[Y];
-                        // Para debuggear lo de abajo
-                        particle.addNeighbor(neighbor);
                     }
                 }
             }
@@ -190,7 +185,6 @@ public class Silo {
         }
         resetGrid();
         performCellIndexMethod();
-        //TODO: Paralelizar esto
         for (Particle p : grains) {
             double[] forceArray = {0, -9.8 / 1000};
             // Interaction Between Particles
