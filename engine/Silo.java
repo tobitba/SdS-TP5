@@ -145,7 +145,7 @@ public class Silo {
                     //LE FLOOR
                     double[] en = WallVersor.DOWN.getEn();
                     double[] et = WallVersor.DOWN.getEt();
-                    double xi = p.radius - (p.y - ys);
+                    double xi = -(p.radius - (p.y - ys));
                     double[] fnet = getFnet(xi, p.getSpeed(), en, et);
                     for (int i = 0; i < 2; i++) {
                         forceArray[i] += fnet[i];
