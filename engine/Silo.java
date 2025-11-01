@@ -199,7 +199,7 @@ public class Silo {
                 //LEFT WALL
                 double[] en = WallVersor.LEFT.getEn();
                 double[] et = WallVersor.LEFT.getEt();
-                double xi = p.radius - p.x;  // xi = R - |distancia pared|
+                double xi = -(p.radius - p.x);  // xi = R - |distancia pared|
                 double[] fnet = getFnet(xi, p.getSpeed(), en, et);
                 for (int i = 0; i < 2; i++) {
                     forceArray[i] += fnet[i];
@@ -209,7 +209,7 @@ public class Silo {
                 //RIGHT WALL
                 double[] en = WallVersor.RIGHT.getEn();
                 double[] et = WallVersor.RIGHT.getEt();
-                double xi = p.radius - (p.x - width);  // xi = R - |distancia pared|
+                double xi = -(p.radius - (width - p.x));  // xi = R - |distancia pared|
                 double[] fnet = getFnet(xi, p.getSpeed(), en, et);
                 for (int i = 0; i < 2; i++) {
                     forceArray[i] += fnet[i];
