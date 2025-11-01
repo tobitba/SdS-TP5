@@ -100,12 +100,7 @@ public class Silo {
         for (Particle g : grains) {
             if (g.y - ys <= -height / 10) {
                 g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
-                double newX = new Random(System.currentTimeMillis()).nextDouble() * width;
-                if(newX<0.011)
-                    newX = 0.011;
-                else if(newX>width-0.011)
-                    newX = width-0.011;
-                g.x = newX;
+                g.x = Math.max(0.011, Math.min(new Random(System.currentTimeMillis()).nextDouble() * width, width - 0.011));
                 g.speedx = 0;
                 g.speedy = 0;
                 totalFlow++;
