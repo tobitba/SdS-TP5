@@ -1,5 +1,6 @@
 package engine;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -17,7 +18,6 @@ public class Silo {
     private final List<Particle> grains;
     private final FixedBaseParticle leftBoundaryParticle;
     private final FixedBaseParticle rightBoundaryParticle;
-    private final int grainCount;
     private final double amplitude;
     private final double frequency;
     private double currentTime;
@@ -27,13 +27,17 @@ public class Silo {
     private final static int X = 0;
     private final static int Y = 1;
 
+    private final int M;
+    private final int N;
+    private final double neighborRadius;
+    private final double vCellLength;
+    private final double hCellLength;
+    private final List<List<Particle>> grid;
 
-    public Silo(double width, double height, double opening, List<Particle> grains, double frequency, double amplitude, double dt, double kn) {
+    public Silo(double width, double height, double opening, double frequency, double amplitude, double dt, double kn, double neighborRadius, double maxParRadius) {
         this.width = width;
         this.height = height;
         this.opening = opening;
-        this.grains = grains;
-        this.grainCount = grains.size();
         this.frequency = frequency;
         this.dt = dt;
         ys = 0;
@@ -43,6 +47,37 @@ public class Silo {
         this.ky = 2 * kn;
         this.leftBoundaryParticle = new FixedBaseParticle((width - opening) / 2, 0);
         this.rightBoundaryParticle = new FixedBaseParticle(width - (width - opening) / 2, 0);
+
+        this.M = (int) Math.round(Math.ceil(height / (neighborRadius + 2 * maxParRadius) - 1));
+        this.N = (int) Math.round(Math.ceil(width / (neighborRadius + 2 * maxParRadius) - 1));
+        this.neighborRadius = neighborRadius;
+        this.vCellLength = height / M;
+        this.hCellLength = width / N;
+
+        this.grains = new ArrayList<>();
+        this.grid = new ArrayList<>();
+        for (int i = 0; i < M * N; i++) {
+            grid.add(new ArrayList<>());
+        }
+    }
+
+    /**
+     * Particles on horizontal cell borders go to the upper cell,
+     * and particles on vertical cell borders go to the right cell.
+     */
+    public void addParticle(Particle particle) {
+        addParticleToGrid(particle);
+        grains.add(particle);
+    }
+
+    private void addParticleToGrid(Particle particle) {
+        double parX = particle.x;
+        double parY = particle.y;
+
+        if (parX >= width || parX < 0 || parY >= height || parY < 0)
+            throw new IndexOutOfBoundsException("The particle doesn't fit on the grid");
+        int i = (int) (parX / hCellLength) + N * (int) (parY / vCellLength);
+        grid.get(i).add(particle);
     }
 
     public void updateBase() {
@@ -59,7 +94,7 @@ public class Silo {
     }
 
     public int grainCount() {
-        return grainCount;
+        return grains.size();
     }
 
     public long totalFlow() {
@@ -102,24 +137,51 @@ public class Silo {
         return fnet;
     }
 
+    private void performCellIndexMethod() {
+        double[] fnet;
+        for (int i = 0; i < M * N; i++) {
+            for (Particle particle : grid.get(i)) {
+                List<Particle> neighbors = getAboveAndRightAdjacentParticles(i);
+                for (Particle neighbor : neighbors) {
+                    if (neighbor.getDistance(particle) <= neighborRadius) {
+                        fnet = getParticleInteractionForce(particle, neighbor);
+                        particle.contactForce[X] += fnet[X];
+                        particle.contactForce[Y] += fnet[Y];
+
+                        neighbor.contactForce[X] += fnet[X];
+                        neighbor.contactForce[Y] += fnet[Y];
+                        // Para debuggear lo de abajo
+                        particle.addNeighbor(neighbor);
+                        neighbor.addNeighbor(particle);
+                    }
+                }
+                for (Particle neighbor : getCurrentCellParticles(i, particle)) {
+                    if (neighbor.getDistance(particle) <= neighborRadius) {
+                        fnet = getParticleInteractionForce(particle, neighbor);
+                        particle.contactForce[X] += fnet[X];
+                        particle.contactForce[Y] += fnet[Y];
+                        // Para debuggear lo de abajo
+                        particle.addNeighbor(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
     public double[][] getForceMatrix() {
-        double[][] forceMatrix = new double[grainCount][Particle.DIMENSION];
+        double[][] forceMatrix = new double[grains().size()][Particle.DIMENSION];
         double leftFloor = (width - opening) / 2;
         double rightFloor = width - (width - opening) / 2;
         for (Particle p : grains) {
+            p.resetContactForce();
+        }
+        performCellIndexMethod();
+        //TODO: Paralelizar esto
+        for (Particle p : grains) {
             double[] forceArray = {0, -9.8 / 1000};
-            //TODO: Hacer que esto use el cellIndexMethod
-            //TODO: Paralelizar esto
-            //TODO: Ver de optimizar esto con simetria
-            for (Particle p2 : grains) {
-                if (p != p2) {
-                    double[] fnet = getParticleInteractionForce(p, p2);
-                    for (int i = 0; i < 2; i++) {
-                        forceArray[i] += fnet[i];
-                    }
-
-                }
-            }
+            // Interaction Between Particles
+            forceArray[X] += p.contactForce[X];
+            forceArray[Y] += p.contactForce[Y];
             if (p.x - p.radius < 0) {
                 //LEFT WALL
                 double[] en = WallVersor.LEFT.getEn();
@@ -163,5 +225,36 @@ public class Silo {
             forceMatrix[p.getId()] = forceArray;
         }
         return forceMatrix;
+    }
+
+    private List<Particle> getAboveAndRightAdjacentParticles(int cellIndex) {
+        List<Particle> adjacentParticles = new ArrayList<>();
+
+        int row = cellIndex / N;
+        int col = cellIndex % N;
+
+        int[][] directions = {
+                {1, 0}, {1, 1}, // above, upper right
+                {0, 1}, // right
+                {-1, 1} // lower right
+        };
+
+        for (int[] dir : directions) {
+            int newRow = row + dir[0];
+            int newCol = col + dir[1];
+
+            if (newRow >= 0 && newRow < M && newCol >= 0 && newCol < N) {
+                int neighborCellIndex = newRow * N + newCol;
+                adjacentParticles.addAll(grid.get(neighborCellIndex));
+            }
+        }
+
+        return adjacentParticles;
+    }
+
+    private List<Particle> getCurrentCellParticles(int i, Particle p) {
+        List<Particle> toReturn = new ArrayList<>(grid.get(i));
+        toReturn.remove(p);
+        return toReturn;
     }
 }

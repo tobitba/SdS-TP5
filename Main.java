@@ -20,10 +20,15 @@ public class Main {
         double height = 0.7;
         double width = 0.2;
         double mass = 0.001;
+        double neighborRadius = 0.025;
+        double maxParRadius = 0.011;
         AtomicInteger i = new AtomicInteger(0);
-        ArrayList<Particle> grains = new ArrayList<>();
-        ParticleGenerator.generate(200,grains::add,height,width, 0.009, 0.011);
-        Silo silo = new Silo(width,height,d,grains,w,0.0015,dt, 250);
+        Silo silo = new Silo(
+                width, height, d, w, 0.0015, dt, 250, neighborRadius, maxParRadius
+        );
+        ParticleGenerator.generate(
+                200, silo::addParticle, height, width, 0.009, maxParRadius
+        );
         Beeman integrator = new Beeman(dt,1000,silo,mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
         timeIt.forEachRemaining(time -> {

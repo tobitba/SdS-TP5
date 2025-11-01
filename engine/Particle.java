@@ -1,5 +1,8 @@
 package engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Particle {
     public static final int DIMENSION = 2;
     private static int globalId = 0;
@@ -8,6 +11,8 @@ public class Particle {
     double y;
     double speedx = 0, speedy = 0;
     final double radius;
+    final double[] contactForce = {0.0, 0.0};
+    final List<Particle> neighbors = new ArrayList<>();
 
     public Particle(double x, double y, double radius) {
         this.id = globalId++;
@@ -32,6 +37,20 @@ public class Particle {
 
     public double[] getSpeed(){
         return new double[]{speedx, speedy};
+    }
+
+    public double getDistance(Particle p) {
+        return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2)) - radius - p.radius;
+    }
+
+    public void addNeighbor(Particle p) {
+        neighbors.add(p);
+    }
+
+    public void resetContactForce() {
+        neighbors.clear();
+        contactForce[0] = 0.0;
+        contactForce[1] = 0.0;
     }
 
     @Override
