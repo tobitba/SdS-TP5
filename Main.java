@@ -18,7 +18,7 @@ public class Main {
         Locale.setDefault(Locale.US);
         double w = Double.parseDouble(System.getProperty(W));
         double d = Double.parseDouble(System.getProperty(D));
-        double dt = 0.001;
+        double dt = 0.0001;
         double height = 0.7;
         double width = 0.2;
         double mass = 0.001;

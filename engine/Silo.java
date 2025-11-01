@@ -23,7 +23,6 @@ public class Silo {
     private double currentTime;
     private final double dt;
     private final double kn;
-    private final double ky;
     private final static int X = 0;
     private final static int Y = 1;
 
@@ -44,7 +43,6 @@ public class Silo {
         currentTime = 0;
         this.amplitude = amplitude;
         this.kn = kn;
-        this.ky = 2 * kn;
         this.leftBoundaryParticle = new FixedBaseParticle((width - opening) / 2, 0);
         this.rightBoundaryParticle = new FixedBaseParticle(width - (width - opening) / 2, 0);
 
