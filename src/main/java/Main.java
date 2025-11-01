@@ -12,12 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Main {
     private static final String W = "W";
     private static final String D = "D";
+    private static final String OUT = "out";
     private static final double SMOOTHING_FACTOR = 10;
 
     public static void main(String[] args) throws IOException {
         Locale.setDefault(Locale.US);
         double w = Double.parseDouble(System.getProperty(W));
         double d = Double.parseDouble(System.getProperty(D));
+        String output_file = System.getProperty(OUT);
         double dt = 0.0001;
         double height = 0.7;
         double width = 0.2;
@@ -33,7 +35,7 @@ public class Main {
         );
         Beeman integrator = new Beeman(dt, 1000, silo, mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
-        try (PostProcessor postProcessor = new PostProcessor("output.txt")) {
+        try (PostProcessor postProcessor = new PostProcessor(output_file)) {
             timeIt.forEachRemaining(time -> {
                 if (i.getAndIncrement() % (1 / (SMOOTHING_FACTOR * dt)) == 0) {
                     postProcessor.processSystem(time);
