@@ -107,7 +107,7 @@ public class Silo {
         double leftFloor = (width - opening) / 2;
         double rightFloor = width - (width - opening) / 2;
         for (Particle p : grains) {
-            double[] forceArray = {0, -9.8 / 1000};
+            double[] forceArray = {0, -9.8 * 1000};
             //TODO: Hacer que esto use el cellIndexMethod
             //TODO: Paralelizar esto
             //TODO: Ver de optimizar esto con simetria
