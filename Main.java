@@ -4,6 +4,7 @@ import tools.PostProcessor;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
@@ -12,6 +13,7 @@ public class Main {
     private static final double SMOOTHING_FACTOR = 10;
 
     public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
         double w = Double.parseDouble(System.getProperty(W));
         double d = Double.parseDouble(System.getProperty(D));
         double dt = 0.0001;
@@ -20,7 +22,7 @@ public class Main {
         double mass = 0.001;
         AtomicInteger i = new AtomicInteger(0);
         ArrayList<Particle> grains = new ArrayList<>();
-        ParticleGenerator.generate(200,grains::add,height,width);
+        ParticleGenerator.generate(200,grains::add,height,width, 0.009, 0.011);
         Silo silo = new Silo(width,height,d,grains,w,0.0015,dt, 250);
         Beeman integrator = new Beeman(dt,1000,silo,mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
