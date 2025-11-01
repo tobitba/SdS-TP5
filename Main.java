@@ -2,6 +2,7 @@ import engine.*;
 import tools.ParticleGenerator;
 import tools.PostProcessor;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Locale;
@@ -12,11 +13,11 @@ public class Main {
     private static final String D = "D";
     private static final double SMOOTHING_FACTOR = 10;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Locale.setDefault(Locale.US);
         double w = Double.parseDouble(System.getProperty(W));
         double d = Double.parseDouble(System.getProperty(D));
-        double dt = 0.0001;
+        double dt = 0.001;
         double height = 0.7;
         double width = 0.2;
         double mass = 0.001;
@@ -29,11 +30,16 @@ public class Main {
         ParticleGenerator.generate(
                 200, silo::addParticle, height, width, 0.009, maxParRadius
         );
-        Beeman integrator = new Beeman(dt,1000,silo,mass);
+        Beeman integrator = new Beeman(dt,500,silo,mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
-        timeIt.forEachRemaining(time -> {
-            if(i.getAndIncrement() % (1/(SMOOTHING_FACTOR*dt)) == 0)
-                PostProcessor.processSystem(time);
-        });
+        try( PostProcessor postProcessor = new PostProcessor("output.txt")){
+            timeIt.forEachRemaining(time -> {
+                if(i.getAndIncrement() % (1/(SMOOTHING_FACTOR*dt)) == 0) {
+                    postProcessor.processSystem(time);
+                    System.out.println(time.time());
+                }
+            });
+        }
+
     }
 }

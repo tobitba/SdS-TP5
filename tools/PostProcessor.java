@@ -8,20 +8,26 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Locale;
 
 public class PostProcessor implements Closeable {
     private static final String OUTPUT_FILE_NAME = "output.txt";
-    private static final BufferedWriter writer;
+    private final BufferedWriter writer;
 
-    static {
+
+    public PostProcessor(String outputName) {
+        Locale.setDefault(Locale.US);
         try {
-            writer = new BufferedWriter(new FileWriter(OUTPUT_FILE_NAME));
+            if (outputName == null)
+                outputName = OUTPUT_FILE_NAME;
+            writer = new BufferedWriter(new FileWriter(outputName));
         } catch (IOException e) {
-            throw new RuntimeException("Error opening file", e);
+            throw new RuntimeException("Error opening file");
         }
     }
 
-    private static void processParticle(Particle particle) {
+
+    private void processParticle(Particle particle) {
         try {
             writer.write(particle.csvString());
             writer.newLine();
@@ -30,7 +36,7 @@ public class PostProcessor implements Closeable {
         }
     }
 
-    public static void processSystem(Time t) {
+    public void processSystem(Time t) {
         try {
             writer.write("%.4f - %d".formatted(t.time(),t.totalFlow()));
             writer.newLine();
