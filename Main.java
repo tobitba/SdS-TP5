@@ -31,7 +31,7 @@ public class Main {
         ParticleGenerator.generate(
                 200, silo::addParticle, height, width, 0.009, maxParRadius
         );
-        Beeman integrator = new Beeman(dt, 500, silo, mass);
+        Beeman integrator = new Beeman(dt, 1000, silo, mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
         try (PostProcessor postProcessor = new PostProcessor("output.txt")) {
             timeIt.forEachRemaining(time -> {
