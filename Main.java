@@ -1,9 +1,10 @@
-import engine.*;
+import engine.Beeman;
+import engine.Silo;
+import engine.Time;
 import tools.ParticleGenerator;
 import tools.PostProcessor;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,7 +22,7 @@ public class Main {
         double height = 0.7;
         double width = 0.2;
         double mass = 0.001;
-        double neighborRadius = 0.025;
+        double neighborRadius = 0.001;
         double maxParRadius = 0.011;
         AtomicInteger i = new AtomicInteger(0);
         Silo silo = new Silo(
@@ -30,11 +31,11 @@ public class Main {
         ParticleGenerator.generate(
                 200, silo::addParticle, height, width, 0.009, maxParRadius
         );
-        Beeman integrator = new Beeman(dt,500,silo,mass);
+        Beeman integrator = new Beeman(dt, 500, silo, mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
-        try( PostProcessor postProcessor = new PostProcessor("output.txt")){
+        try (PostProcessor postProcessor = new PostProcessor("output.txt")) {
             timeIt.forEachRemaining(time -> {
-                if(i.getAndIncrement() % (1/(SMOOTHING_FACTOR*dt)) == 0) {
+                if (i.getAndIncrement() % (1 / (SMOOTHING_FACTOR * dt)) == 0) {
                     postProcessor.processSystem(time);
                     System.out.println(time.time());
                 }
