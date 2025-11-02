@@ -23,24 +23,13 @@ public class Beeman {
 
     private class BeemanIterator implements Iterator<Time> {
         private double time;
-        private final double[][] prevSpeed;
+        private final double[][] currentSpeed;
         private double[][] prevForceMatrix;
 
         public BeemanIterator() {
             time = 0;
-            prevSpeed = new double[silo.grainCount()][Particle.DIMENSION];
+            currentSpeed = new double[silo.grainCount()][Particle.DIMENSION];
             prevForceMatrix = silo.getForceMatrix();
-            // This initial loop is to get a(t - DeltaT) using euler
-            for (Particle p : silo.grains()) {
-                double[] forceArray = prevForceMatrix[p.getId()];
-                double[] speedArray = p.getSpeed();
-                for(int i = 0; i < Particle.DIMENSION; i++) {
-                    double speed = speedArray[i];
-                    double force = forceArray[i];
-                    int id = p.getId();
-                    prevSpeed[id][i] = speed - dt * force / mass;
-                }
-            }
         }
 
         @Override
@@ -50,6 +39,7 @@ public class Beeman {
 
         @Override
         public Time next() {
+            silo.updateBase();
             double[][] forceMatrix = silo.getForceMatrix();
             for (Particle p : silo.grains()) {
                 double[] forceArray = forceMatrix[p.getId()];
@@ -58,28 +48,26 @@ public class Beeman {
                 double[] newSpeed = new double[Particle.DIMENSION];
                 double[] newPos = new double[Particle.DIMENSION];
                 for (int i = 0; i < Particle.DIMENSION; i++) {
-                    int id = p.getId();
                     double pos = posArray[i];
                     double speed = speedArray[i];
-                    prevSpeed[id][i] = speed;
+                    currentSpeed[p.getId()][i] = speed;
                     double force = forceArray[i];
-                    double prevForce = prevForceMatrix[id][i];
-                    newPos[i] = pos + speed * dt + 2 * dts * (force / (3 * mass)) - dts * prevForce / (6 * mass);
-                    newSpeed[i] = speed + 3 * dt * force / (2 * mass) - dt * prevForce / (2 * mass);
+                    double prevForce = prevForceMatrix[p.getId()][i];
+                    newPos[i] = pos + speed * dt + 2.0 * dts * (force / (3.0 * mass)) - dts * prevForce / (6.0 * mass);
+                    newSpeed[i] = speed + 3.0 * dt * force / (2.0 * mass) - dt * prevForce / (2.0 * mass); // Este es el predictedVel
                 }
                 p.updatePos(newPos);
                 p.updateSpeed(newSpeed);
             }
-            silo.updateBase();
-            double[][] nextForceMatrix = silo.getForceMatrix();
+            double[][] nextForceMatrix = silo.getForceMatrix(); // Get the forces using the newPos and newPredSpeed
             for (Particle p : silo.grains()) {
                 double[] newSpeed = new double[Particle.DIMENSION];
                 double[] nextForceArray = nextForceMatrix[p.getId()];
                 double[] forceArray = forceMatrix[p.getId()];
                 double[] prevForceArray = prevForceMatrix[p.getId()];
                 for (int i = 0; i < Particle.DIMENSION; i++) {
-                    double speed = prevSpeed[p.getId()][i];
-                    double nextSpeed = speed + dt * nextForceArray[i] / (3 * mass) + 5 * dt * forceArray[i] / (6 * mass) - dt * prevForceArray[i] / (6 * mass);
+                    double speed = currentSpeed[p.getId()][i];
+                    double nextSpeed = speed + dt * nextForceArray[i] / (3.0 * mass) + 5.0 * dt * forceArray[i] / (6.0 * mass) - dt * prevForceArray[i] / (6.0 * mass);
                     newSpeed[i] = nextSpeed;
                 }
                 p.updateSpeed(newSpeed);
