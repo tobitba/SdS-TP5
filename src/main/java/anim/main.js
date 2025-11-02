@@ -1,10 +1,11 @@
 /**
- * animate_silo_large.js
+ * animate_silo_scaled_ratio.js
  *
- * Escala la animación para que sea más grande pero mantenga proporciones.
+ * Escala la animación para que sea más grande pero mantenga proporciones del silo.
+ * Permite canvas con cualquier proporción usando --canvas-ratio.
  *
  * Uso ejemplo:
- *   node animate_silo_large.js -i data.txt -o out --width 1.0 --height 2.0 --scale 300
+ * node animate_silo_scaled_ratio.js -i data.txt -o out --width 1.0 --height 2.0 --scale 600 --canvas-ratio 16/9
  */
 
 import fs from "fs";
@@ -18,13 +19,14 @@ const program = new Command();
 program
     .requiredOption('-i, --input <file>', 'Archivo .txt con datos')
     .option('-o, --outdir <dir>', 'Directorio de salida', 'out')
-    .option('--width <num>', 'Ancho del silo W (unidades)', parseFloat, 1.0)
-    .option('--height <num>', 'Altura del silo L (unidades)', parseFloat, 2.0)
+    .option('--width <num>', 'Ancho del silo W (unidades)', parseFloat, 0.2)
+    .option('--height <num>', 'Altura del silo L (unidades)', parseFloat, 0.7)
     .option('--opening <num>', 'Abertura del piso D (unidades)', parseFloat, 0.2)
-    .option('--A <num>', 'Amplitud vibración del piso', parseFloat, 0.02)
+    .option('--A <num>', 'Amplitud vibración del piso', parseFloat, 0.0015)
     .option('--w0 <num>', 'Frecuencia angular w0 (rad/s)', parseFloat, 400)
     .option('--fps <num>', 'Frames por segundo', parseInt, 30)
-    .option('--scale <num>', 'Píxeles por unidad', parseFloat, 900) // <--- ajusta aquí para tamaño final
+    .option('--scale <num>', 'Píxeles por unidad', parseFloat, 600)
+    .option('--canvas-ratio <num>', 'Proporción del canvas (width/height)', parseFloat, 16.0/9.0)
     .option('--apply-floor-to-particles', 'Aplicar desplazamiento del piso a partículas', false)
     .option('--frames-only', 'Solo generar PNGs', false)
     .option('--particle-scale <num>', 'Factor multiplicativo para el radio de partículas', parseFloat, 1.0)
@@ -67,18 +69,50 @@ function parseInputFile(pathFile) {
   return frames;
 }
 
-// ==================== Transformación mundo -> canvas ====================
-function worldToCanvas(x, y, opts) {
-  const margin = 20 * opts.supersample;
-  const canvasW = Math.round(opts.width * opts.scale * opts.supersample) + margin * 2;
-  const canvasH = Math.round(opts.height * opts.scale * opts.supersample) + margin * 2;
-  const cx = margin + x * opts.scale * opts.supersample;
-  const cy = margin + (opts.height - y) * opts.scale * opts.supersample;
-  return { cx, cy, canvasW, canvasH };
+// ==================== Transformación mundo -> canvas con proporción ====================
+function worldToCanvas(x, y, opts, precomputed) {
+  const scale = opts.scale * (opts.supersample || 1.0);
+  const margin = 20 * (opts.supersample || 1.0);
+
+  // obtener offsets y tamaño de canvas
+  const { offsetX, offsetY, canvasWpx, canvasHpx } = precomputed;
+
+  const cx = offsetX + x * scale;
+  const cy = offsetY + (opts.height - y) * scale; // invertir Y
+
+  return { cx, cy, canvasWpx, canvasHpx };
 }
 
+// ==================== Calcular offsets y canvas según ratio ====================
+// ==================== Calcular offsets y canvas según ratio y padding ====================
+function computeCanvasSizes(opts) {
+  const supersample = opts.supersample || 1.0;
+  const margin = 20 * supersample;
+  const scale = opts.scale * supersample;
+  const siloWpx = opts.width * scale;
+  const siloHpx = opts.height * scale;
+
+  const canvasRatio = opts.canvasRatio || (siloWpx / siloHpx);
+
+  let canvasWpx, canvasHpx;
+  if (siloWpx / siloHpx > canvasRatio) {
+    canvasWpx = Math.round(siloWpx + margin*2);
+    canvasHpx = Math.round(canvasWpx / canvasRatio);
+  } else {
+    canvasHpx = Math.round(siloHpx + margin*2);
+    canvasWpx = Math.round(canvasHpx * canvasRatio);
+  }
+
+  const verticalPadding = (-25 || 0) * supersample; // padding extra arriba y abajo
+  const offsetX = (canvasWpx - siloWpx)/2 + margin - 15;
+  const offsetY = (canvasHpx - siloHpx)/2 + margin + verticalPadding;
+
+  return { canvasWpx, canvasHpx, offsetX, offsetY };
+}
+
+
 // ==================== Dibujar un frame ====================
-async function drawFrameToCanvas(frame, idx, opts) {
+async function drawFrameToCanvas(frame, idx, opts, precomputed) {
   const W = opts.width, L = opts.height, D = opts.opening;
   const A = opts.A, w0 = opts.w0, t = frame.t;
   const applyFloorToParticles = opts.applyFloorToParticles;
@@ -88,9 +122,7 @@ async function drawFrameToCanvas(frame, idx, opts) {
   const floorOffset = A * Math.sin(w0 * t);
   const floorY = 0 + floorOffset;
 
-  const margin = 20 * supersample;
-  const canvasWpx = Math.round(W * opts.scale * supersample) + margin * 2;
-  const canvasHpx = Math.round(L * opts.scale * supersample) + margin * 2;
+  const { canvasWpx, canvasHpx, offsetX, offsetY } = precomputed;
   const canvas = createCanvas(canvasWpx, canvasHpx);
   const ctx = canvas.getContext('2d');
 
@@ -107,31 +139,31 @@ async function drawFrameToCanvas(frame, idx, opts) {
   // paredes
   const wallThickness = Math.max(2, Math.round(8 * (opts.scale / 400) * supersample));
   ctx.fillStyle = '#cccccc';
-  ctx.fillRect(margin - wallThickness, 0, wallThickness, canvasHpx);
-  ctx.fillRect(canvasWpx - margin, 0, wallThickness, canvasHpx);
+  ctx.fillRect(offsetX - wallThickness, offsetY, wallThickness, opts.height*opts.scale*supersample);
+  ctx.fillRect(offsetX + opts.width*opts.scale*supersample, offsetY, wallThickness, opts.height*opts.scale*supersample);
 
   // piso
   const leftSegmentWorldW = (W - D)/2.0;
   const rightSegmentWorldX = (W + D)/2.0;
-  const yf_canvas = worldToCanvas(0, floorY, opts).cy;
-  const floorHeightPx = Math.max(2, Math.round(6 * (opts.scale/400) * supersample));
+  const yf_canvas = offsetY + (opts.height - floorY) * opts.scale * supersample;
+  const floorHeightPx = Math.max(2, Math.round(3 * (opts.scale/400) * supersample));
   ctx.fillStyle = '#888888';
-  ctx.fillRect(worldToCanvas(0,0,opts).cx, yf_canvas - floorHeightPx/2,
-      Math.round(leftSegmentWorldW * opts.scale * supersample), floorHeightPx);
-  ctx.fillRect(worldToCanvas(rightSegmentWorldX,0,opts).cx, yf_canvas - floorHeightPx/2,
-      Math.round(leftSegmentWorldW * opts.scale * supersample), floorHeightPx);
+  ctx.fillRect(offsetX, yf_canvas - floorHeightPx/2,
+      leftSegmentWorldW * opts.scale * supersample, floorHeightPx);
+  ctx.fillRect(offsetX + rightSegmentWorldX*opts.scale*supersample, yf_canvas - floorHeightPx/2,
+      leftSegmentWorldW * opts.scale * supersample, floorHeightPx);
 
   // techo
   ctx.strokeStyle = '#999999';
   ctx.lineWidth = 1 * supersample;
-  ctx.strokeRect(margin - wallThickness, margin,
-      canvasWpx - 2*(margin - wallThickness),
-      canvasHpx - margin*2);
+  ctx.strokeRect(offsetX - wallThickness, offsetY,
+      opts.width*opts.scale*supersample + 2*wallThickness,
+      opts.height*opts.scale*supersample);
 
   // partículas
   for (const p of frame.particles) {
     const py = applyFloorToParticles ? p.y + floorOffset : p.y;
-    const { cx, cy } = worldToCanvas(p.x, py, opts);
+    const { cx, cy } = worldToCanvas(p.x, py, opts, precomputed);
     const rpx = Math.max(1, p.r * opts.scale * particleRadiusScale * supersample);
 
     const grad = ctx.createRadialGradient(cx, cy, rpx*0.2, cx, cy, rpx);
@@ -144,12 +176,12 @@ async function drawFrameToCanvas(frame, idx, opts) {
   }
 
   // etiquetas
+// etiquetas arriba a la izquierda del canvas
   ctx.fillStyle = '#000000';
   ctx.font = `${Math.max(12, Math.round(14*(opts.scale/400)*supersample))}px Sans`;
   ctx.textBaseline = 'top';
-  ctx.fillText(`t=${t.toFixed(3)} s  flowtotal=${frame.flowtotal}`, margin+6,6);
-  ctx.fillStyle = '#333333';
-  ctx.fillText(`A=${A}, w0=${w0}`, margin+6, canvasHpx-20);
+  ctx.fillText(`t=${t.toFixed(2)}s  caudal=${(frame.flowtotal/t).toFixed(2)}`, 10, 10);
+
 
   // guardar PNG
   const fname = path.join(opts.outdir, `frame${String(idx).padStart(5,'0')}.png`);
@@ -157,7 +189,10 @@ async function drawFrameToCanvas(frame, idx, opts) {
   const stream = canvas.createPNGStream();
   stream.pipe(out);
 
-  return new Promise((resolve,reject)=>{out.on('finish',()=>resolve(fname)); out.on('error',reject);});
+  return new Promise((resolve,reject)=>{
+    out.on('finish',()=>resolve(fname));
+    out.on('error',reject);
+  });
 }
 
 // ==================== Loop principal ====================
@@ -167,9 +202,11 @@ async function drawFrameToCanvas(frame, idx, opts) {
     if (frames.length===0){ console.error('No se detectaron frames.'); process.exit(1);}
     console.log(`Frames parseados: ${frames.length}`);
 
+    const precomputed = computeCanvasSizes(opts);
+
     for(let i=0;i<frames.length;i++){
       process.stdout.write(`Generando frame ${i+1}/${frames.length}...\r`);
-      await drawFrameToCanvas(frames[i], i+1, opts);
+      await drawFrameToCanvas(frames[i], i+1, opts, precomputed);
     }
     console.log('\nPNG frames generados en:', opts.outdir);
 
@@ -187,3 +224,4 @@ async function drawFrameToCanvas(frame, idx, opts) {
 
   } catch(err){ console.error('Error:',err); process.exit(1);}
 })();
+
