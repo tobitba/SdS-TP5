@@ -87,6 +87,8 @@ public class Silo {
         }
     }
 
+    private final Random baseRandom = new Random(System.currentTimeMillis());
+
     public void updateBase() {
         currentTime += dt;
         ys = amplitude * Math.sin(currentTime * frequency);
@@ -94,7 +96,7 @@ public class Silo {
         rightBoundaryParticle.updatePos(ys);
         for (Particle g : grains) {
             if (g.y - ys <= -height / 10) {
-                g.y = new Random(System.currentTimeMillis()).nextDouble() * 0.3 + 0.4;
+                g.y = baseRandom.nextDouble() * 0.3 + 0.4;
 //                g.x = Math.max(0.011, Math.min(new Random(System.currentTimeMillis()).nextDouble() * width, width - 0.011));
                 g.speedx = 0;
                 g.speedy = 0;
@@ -243,8 +245,8 @@ public class Silo {
 
         int[][] directions = {
                 {1, 0}, {1, 1}, // above, upper right
-                {0, 1}, // right
-                {-1, 1} // lower right
+                        {0, 1}, // right
+                        {-1, 1} // lower right
         };
 
         for (int[] dir : directions) {

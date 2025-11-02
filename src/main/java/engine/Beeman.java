@@ -50,7 +50,7 @@ public class Beeman {
                 for (int i = 0; i < Particle.DIMENSION; i++) {
                     double pos = posArray[i];
                     double speed = speedArray[i];
-                    currentSpeed[p.getId()][i] = speed;
+                    currentSpeed[p.getId()][i] = speed * 0.9625;
                     double force = forceArray[i];
                     double prevForce = prevForceMatrix[p.getId()][i];
                     newPos[i] = pos + speed * dt + 2.0 * dts * (force / (3.0 * mass)) - dts * prevForce / (6.0 * mass);
