@@ -50,7 +50,6 @@ public class Beeman {
 
         @Override
         public Time next() {
-            silo.updateBase();
             double[][] forceMatrix = silo.getForceMatrix();
             for (Particle p : silo.grains()) {
                 double[] forceArray = forceMatrix[p.getId()];
@@ -59,16 +58,19 @@ public class Beeman {
                 double[] newSpeed = new double[Particle.DIMENSION];
                 double[] newPos = new double[Particle.DIMENSION];
                 for (int i = 0; i < Particle.DIMENSION; i++) {
+                    int id = p.getId();
                     double pos = posArray[i];
                     double speed = speedArray[i];
+                    prevSpeed[id][i] = speed;
                     double force = forceArray[i];
-                    double prevForce = prevForceMatrix[p.getId()][i];
+                    double prevForce = prevForceMatrix[id][i];
                     newPos[i] = pos + speed * dt + 2 * dts * (force / (3 * mass)) - dts * prevForce / (6 * mass);
                     newSpeed[i] = speed + 3 * dt * force / (2 * mass) - dt * prevForce / (2 * mass);
                 }
                 p.updatePos(newPos);
                 p.updateSpeed(newSpeed);
             }
+            silo.updateBase();
             double[][] nextForceMatrix = silo.getForceMatrix();
             for (Particle p : silo.grains()) {
                 double[] newSpeed = new double[Particle.DIMENSION];
