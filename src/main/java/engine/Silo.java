@@ -85,6 +85,7 @@ public class Silo {
             cell.clear();
         }
         for (Particle p : grains) {
+            p.resetContactForce();
             addParticleToGrid(p);
         }
     }
@@ -96,15 +97,33 @@ public class Silo {
         ys = amplitude * Math.sin(currentTime * frequency);
         leftBoundaryParticle.updatePos(ys);
         rightBoundaryParticle.updatePos(ys);
-        for (Particle g : grains) {
-            if (g.y - ys <= -height / 10) {
-                g.y = baseRandom.nextDouble() * 0.3 + 0.4;
-                g.x = baseRandom.nextDouble() * (width - 2 * maxParRadius) + maxParRadius;
-                g.speedx = 0;
-                g.speedy = 0;
+        resetGrid();
+        for (Particle p : grains) {
+            if (p.y - ys <= -height / 10) {
+                boolean overlap = true;
+                while (overlap) {
+                    overlap = false;
+                    p.y = baseRandom.nextDouble() * 0.3 + 0.4;
+                    p.x = baseRandom.nextDouble() * (width - 2 * maxParRadius) + maxParRadius;
+                    int i = (int) (p.x / hCellLength) + N * (int) ((p.y + offset) / vCellLength);
+                    List<Particle> neighbors = getAllDirectionNeighbors(i);
+                    for (Particle p2 : neighbors) {
+                        double dx = p2.x - p.x;
+                        double dy = p2.y - p.y;
+                        double dr = Math.sqrt(dx * dx + dy * dy);
+                        double xi = p.radius + p2.radius - dr;
+                        if (xi > 0) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                }
+                p.speedx = 0;
+                p.speedy = 0;
                 totalFlow++;
             }
         }
+
     }
 
     public int grainCount() {
@@ -184,9 +203,6 @@ public class Silo {
         double[][] forceMatrix = new double[grains().size()][Particle.DIMENSION];
         double leftFloor = (width - opening) / 2;
         double rightFloor = width - (width - opening) / 2;
-        for (Particle p : grains) {
-            p.resetContactForce();
-        }
         resetGrid();
         performCellIndexMethod();
         for (Particle p : grains) {
@@ -249,6 +265,31 @@ public class Silo {
                 {1, 0}, {1, 1}, // above, upper right
                         {0, 1}, // right
                         {-1, 1} // lower right
+        };
+
+        for (int[] dir : directions) {
+            int newRow = row + dir[0];
+            int newCol = col + dir[1];
+
+            if (newRow >= 0 && newRow < M && newCol >= 0 && newCol < N) {
+                int neighborCellIndex = newRow * N + newCol;
+                adjacentParticles.addAll(grid.get(neighborCellIndex));
+            }
+        }
+
+        return adjacentParticles;
+    }
+
+    private List<Particle> getAllDirectionNeighbors(int cellIndex) {
+        List<Particle> adjacentParticles = new ArrayList<>();
+
+        int row = cellIndex / N;
+        int col = cellIndex % N;
+
+        int[][] directions = {
+                {1, -1}, {1, 0}, {1, 1}, // above, upper right
+                {0, -1}, {0, 0}, {0, 1}, // right
+                {-1, -1},{-1, 0},{-1, 1} // lower right
         };
 
         for (int[] dir : directions) {
