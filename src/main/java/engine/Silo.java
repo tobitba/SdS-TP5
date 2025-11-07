@@ -29,6 +29,7 @@ public class Silo {
     private final double vCellLength;
     private final double hCellLength;
     private final List<List<Particle>> grid;
+    private final double maxParRadius;
 
     public Silo(double width, double height, double opening, double frequency, double amplitude, double dt, double kn, double neighborRadius, double maxParRadius) {
         this.width = width;
@@ -43,6 +44,7 @@ public class Silo {
         this.leftBoundaryParticle = new FixedBaseParticle((width - opening) / 2, 0);
         this.rightBoundaryParticle = new FixedBaseParticle(width - (width - opening) / 2, 0);
 
+        this.maxParRadius = maxParRadius;
         this.M = (int) Math.round(Math.ceil(height / (neighborRadius + 2 * maxParRadius) - 1));
         this.N = (int) Math.round(Math.ceil(width / (neighborRadius + 2 * maxParRadius) - 1));
         this.neighborRadius = neighborRadius;
@@ -97,7 +99,7 @@ public class Silo {
         for (Particle g : grains) {
             if (g.y - ys <= -height / 10) {
                 g.y = baseRandom.nextDouble() * 0.3 + 0.4;
-//                g.x = Math.max(0.011, Math.min(new Random(System.currentTimeMillis()).nextDouble() * width, width - 0.011));
+                g.x = baseRandom.nextDouble() * (width - 2 * maxParRadius) + maxParRadius;
                 g.speedx = 0;
                 g.speedy = 0;
                 totalFlow++;
@@ -144,8 +146,8 @@ public class Silo {
             double eny = dy / dr;
             double[] en = {enx, eny};
             double[] et = {-eny, enx};
-            double dvx = p2.speedx - p.speedx;
-            double dvy = p2.speedy - p.speedy;
+            double dvx = p.speedx - p2.speedx;
+            double dvy = p.speedy - p2.speedy;
             double[] dv = {dvx, dvy};
             fnet = getFnet(xi, dv, en, et);
         }
