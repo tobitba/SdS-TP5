@@ -8,6 +8,7 @@ import java.util.Random;
 public class Silo {
     private final double width;
     private final double height;
+    private final double offset;
     private final double opening;
     private double ys;
     private long totalFlow;
@@ -34,6 +35,7 @@ public class Silo {
     public Silo(double width, double height, double opening, double frequency, double amplitude, double dt, double kn, double neighborRadius, double maxParRadius) {
         this.width = width;
         this.height = height;
+        this.offset = height/10 + amplitude;
         this.opening = opening;
         this.frequency = frequency;
         this.dt = dt;
@@ -45,10 +47,10 @@ public class Silo {
         this.rightBoundaryParticle = new FixedBaseParticle(width - (width - opening) / 2, 0);
 
         this.maxParRadius = maxParRadius;
-        this.M = (int) Math.round(Math.ceil(height / (neighborRadius + 2 * maxParRadius) - 1));
+        this.M = (int) Math.round(Math.ceil((height + offset) / (neighborRadius + 2 * maxParRadius) - 1));
         this.N = (int) Math.round(Math.ceil(width / (neighborRadius + 2 * maxParRadius) - 1));
         this.neighborRadius = neighborRadius;
-        this.vCellLength = height / M;
+        this.vCellLength = (height + offset) / M;
         this.hCellLength = width / N;
 
         this.grains = new ArrayList<>();
@@ -71,12 +73,10 @@ public class Silo {
         double parX = particle.x;
         double parY = particle.y;
 
-        if (parX >= width || parX < 0 || parY >= height || parY < 0) {
-            // throw new IndexOutOfBoundsException("The particle doesn't fit on the grid");
-            // System.out.printf("Particle %d left the grid\n", particle.getId());
+        if (parX >= width || parX < 0 || parY >= height || parY < -offset) {
             return;
         }
-        int i = (int) (parX / hCellLength) + N * (int) (parY / vCellLength);
+        int i = (int) (parX / hCellLength) + N * (int) ((parY + offset) / vCellLength);
         grid.get(i).add(particle);
     }
 
@@ -129,7 +129,7 @@ public class Silo {
         double fnCoeff = -kn * xi - dotProduct(dv, en) * gamma;
         double[] fn = Arrays.stream(en).map(E -> fnCoeff * E).toArray();
         double fnAbs = Math.sqrt(fn[0] * fn[0] + fn[1] * fn[1]);
-        double mu = 0.5;
+        double mu = 0.2;
         double ftCoeff = -mu * fnAbs * Math.signum(dotProduct(et, dv));
         double[] ft = Arrays.stream(et).map(E -> ftCoeff * E).toArray();
         return new double[]{fn[0] + ft[0], fn[1] + ft[1]};
