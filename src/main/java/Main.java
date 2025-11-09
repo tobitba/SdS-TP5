@@ -13,7 +13,7 @@ public class Main {
     private static final String W = "W";
     private static final String D = "D";
     private static final String OUT = "out";
-    private static final double SMOOTHING_FACTOR = 10;
+    private static final double SMOOTHING_FACTOR = 100;
 
     public static void main(String[] args) throws IOException {
         Locale.setDefault(Locale.US);
@@ -33,7 +33,7 @@ public class Main {
         ParticleGenerator.generate(
                 200, silo::addParticle, height, width, 0.009, maxParRadius
         );
-        Beeman integrator = new Beeman(dt, 1000, silo, mass);
+        Beeman integrator = new Beeman(dt, 400, silo, mass);
         Iterator<Time> timeIt = integrator.beemanEstimation();
         try (PostProcessor postProcessor = new PostProcessor(output_file)) {
             timeIt.forEachRemaining(time -> {
